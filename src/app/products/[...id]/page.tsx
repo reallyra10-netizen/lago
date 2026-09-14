@@ -24,36 +24,55 @@ export async function generateMetadata(
   try {
     // read route params
     const { id } = await params;
-    console.log('[Metadata] Fetching product for ID:', id);
- 
-    // fetch data
-    const product = await getProductById(id);
-    console.log('[Metadata] Product fetched:', product?.title || 'null');
-
-    if (!product) {
-      console.log('[Metadata] Product not found, returning fallback');
+    const numId = parseInt(id, 10);
+    
+    if (isNaN(numId)) {
       return { 
-        title: 'Product Not Found',
-        description: 'The product you are looking for does not exist.'
+        title: 'Product',
+        description: 'Product details'
       };
     }
- 
-    console.log('[Metadata] Returning product metadata:', product.title);
-    return {
-      title: product.title,
-      description: product.description,
-      openGraph: {
-        title: product.title,
-        description: product.description,
-        images: [product.image],
-      },
+
+    // Fetch product data with timeout to prevent hanging during build
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+    
+    try {
+      const res = await fetch(`https://fakestoreapi.com/products/${numId}`, {
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const product = await res.json();
+        
+        if (product && product.title) {
+          return {
+            title: product.title,
+            description: product.description || 'Discover this product',
+            openGraph: {
+              title: product.title,
+              description: product.description || 'Discover this product',
+              images: product.image ? [product.image] : [],
+            },
+          }
+        }
+      }
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      console.error('[Metadata] Fetch error:', fetchError);
     }
-  } catch (error) {
-    console.error('[Metadata] Error fetching product:', error);
-    // Fallback metadata if fetch fails
+
+    // Generic fallback - better than "Product Not Found"
     return { 
-      title: 'Product Details',
-      description: 'View product details'
+      title: 'Product',
+      description: 'Discover our products'
+    };
+  } catch (error) {
+    console.error('[Metadata] Error in generateMetadata:', error);
+    return { 
+      title: 'Product',
+      description: 'Discover our products'
     };
   }
 }
