@@ -20,22 +20,35 @@ async function getProductById(id: string) {
 export async function generateMetadata(
   { params }: Props
 ): Promise<Metadata> {
-  // read route params
-  const { id } = await params;
+  try {
+    // read route params
+    const { id } = await params;
  
-  // fetch data
-  const product = await getProductById(id);
+    // fetch data
+    const product = await getProductById(id);
 
-  if (!product) return { title: 'Product Not Found' };
+    if (!product) {
+      return { 
+        title: 'Product Not Found',
+        description: 'The product you are looking for does not exist.'
+      };
+    }
  
-  return {
-    title: product.title,
-    description: product.description,
-    openGraph: {
+    return {
       title: product.title,
       description: product.description,
-      images: [product.image],
-    },
+      openGraph: {
+        title: product.title,
+        description: product.description,
+        images: [product.image],
+      },
+    }
+  } catch (error) {
+    // Fallback metadata if fetch fails
+    return { 
+      title: 'Product Details',
+      description: 'View product details'
+    };
   }
 }
  
