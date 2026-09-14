@@ -11,7 +11,8 @@ async function getProductById(id: string) {
   const numId = parseInt(id, 10);
   if (isNaN(numId)) return null;
   
-  const res = await fetch(`${process.env.FAKESTORE_API}/products/${numId}`);
+  // Hardcoded URL - env vars not available during build time
+  const res = await fetch(`https://fakestoreapi.com/products/${numId}`);
   if (!res.ok) return null;
   return res.json();
 }
