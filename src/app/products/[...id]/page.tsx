@@ -1,24 +1,24 @@
 
 import ProductDetailListComponent from "@/components/products/ProductDetailListComponent";
+import { error } from "console";
 
-import type { Metadata } from 'next'
+import type { Metadata, ResolvingMetadata } from 'next'
  
 type Props = {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: number }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
-async function getProductById(id: string) {
-  const numId = parseInt(id, 10);
-  if (isNaN(numId)) return null;
-  
-  const res = await fetch(`${process.env.FAKESTORE_API}/products/${numId}`);
+async function getProductById(id: number) {
+  const res = await fetch(`${process.env.FAKESTORE_API}/products/${id}`);
   if (!res.ok) return null;
   return res.json();
 }
  
 // dynamic metadata & opengraph 
 export async function generateMetadata(
-  { params }: Props
+  { params, searchParams }: Props,
+  parent: ResolvingMetadata
 ): Promise<Metadata> {
   // read route params
   const { id } = await params;
@@ -26,7 +26,9 @@ export async function generateMetadata(
   // fetch data
   const product = await getProductById(id);
 
-  if (!product) return { title: 'Product Not Found' };
+ 
+  // optionally access and extend (rather than replace) parent metadata
+  const previousImages = (await parent).openGraph?.images || []
  
   return {
     title: product.title,
@@ -34,18 +36,19 @@ export async function generateMetadata(
     openGraph: {
       title: product.title,
       description: product.description,
-      images: [product.image],
+      images: [`${product.image}`, ...previousImages],
     },
   }
 }
  
 export default async function DetailProductPage(
-  { params }: Props
+  { params, searchParams }: Props
   ) {
   const {id} = await params;
   return (
     <div>
-      <ProductDetailListComponent id={parseInt(id, 10)}/>
+      {/* Product ID = {id} */}
+       <ProductDetailListComponent id={id}/>
     </div>
   )
 }
