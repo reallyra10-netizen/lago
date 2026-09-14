@@ -23,17 +23,21 @@ export async function generateMetadata(
   try {
     // read route params
     const { id } = await params;
+    console.log('[Metadata] Fetching product for ID:', id);
  
     // fetch data
     const product = await getProductById(id);
+    console.log('[Metadata] Product fetched:', product?.title || 'null');
 
     if (!product) {
+      console.log('[Metadata] Product not found, returning fallback');
       return { 
         title: 'Product Not Found',
         description: 'The product you are looking for does not exist.'
       };
     }
  
+    console.log('[Metadata] Returning product metadata:', product.title);
     return {
       title: product.title,
       description: product.description,
@@ -44,6 +48,7 @@ export async function generateMetadata(
       },
     }
   } catch (error) {
+    console.error('[Metadata] Error fetching product:', error);
     // Fallback metadata if fetch fails
     return { 
       title: 'Product Details',
